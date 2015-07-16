@@ -43,7 +43,7 @@ public class ForecastFragment extends Fragment {
 
     public ForecastFragment() {
     }
-//fffgg
+//fffggff
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
