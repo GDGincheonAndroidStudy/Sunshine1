@@ -337,11 +337,9 @@ public class ForecastFragment extends Fragment {
         @Override
         protected void onPostExecute(String[] result) {
             if (result != null) {
-                mForecastAdapter.notifyItemRemoved(weekForecast.size());
-                for(String dayForecastStr : result) {
-                    weekForecast = new ArrayList<String>(Arrays.asList(dayForecastStr));
-                    mForecastAdapter = new ForecastAdapter();
-                }
+                    weekForecast = new ArrayList<String>(Arrays.asList(result));
+                    mForecastAdapter.notifyDataSetChanged();
+
                 // New data is back from the server.  Hooray!
             }
         }
