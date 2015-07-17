@@ -4,6 +4,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,7 +14,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import org.json.JSONArray;
@@ -39,11 +40,19 @@ import java.util.List;
  */
 public class ForecastFragment extends Fragment {
 
-    private ArrayAdapter<String> mForecastAdapter;//배열형 어댑터선언
-
+    private RecyclerView.Adapter mForecastAdapter;
+    List<String> weekForecast;
+    private RecyclerView mForecastRecyclerView;
+    private LinearLayoutManager mLayoutManager;
+    //배열형 어댑터선언
+/*<> 안에 들어가 있는 것은 자료형이나 데이터구조체, 클래스의 이름인데 이렇게 <>안에 자기가 원하는자료형을 넣어서 쓸 수 있게 작성된 클래스를 템플릿 클래스라고 한다.
+* <>안에가 int형이면 정수형 자료를 담을 수 있는 그릇이고 singeritem이면 singeritem의 자료를 담겠다고 선언한 것
+* context - Abstract 클래스로 어플리케이션에서 쓸 수 있는 시스템을 관리하는 정보를 쓸 수 있고 api등을 쓰는 것을 가능하게 해주는 클래스이다.
+* 다른 언어에서도 이런 클래스들은 바로 가져다 쓸 수 있지만 안드로이드의 특징은 context객체를 통해서 내가 하고자 하는 일들을 할 수 있다는 점이다.
+* context는 어플리케이션이 생성될 때 만들어지고 각각의 context는 모두 각 기능들이 생성될 때 각각의 개별의 context가 생성이 된다.*/
     public ForecastFragment() {
     }
-//fffggff
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,11 +79,33 @@ public class ForecastFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    public class ForecastAdapter extends RecyclerView.Adapter<ForecastHolder>{
+
+        @Override
+        public ForecastHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            View view = inflater.inflate(R.layout.list_item_forecast,parent,false);
+            return new ForecastHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(ForecastHolder holder, int position) {
+
+            holder.textView.setText(weekForecast.get(position).toString());
+
+        }
+
+        @Override
+        public int getItemCount() {
+            return weekForecast.size();
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,//첫화면에서 보이는거?
                              Bundle savedInstanceState) {
 
-        // Create some dummy data for the ListView.  Here's a sample weekly forecast
+
         String[] data = {
                 "Mon 6/23- Sunny - 31/17",
                 "Tue 6/24 - Foggy - 21/8",
@@ -84,23 +115,24 @@ public class ForecastFragment extends Fragment {
                 "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
                 "Sun 6/29 - Sunny - 20/7"
         };
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
+
+        // Create some dummy data for the ListView.  Here's a sample weekly forecast
+
+        weekForecast = new ArrayList<String>(Arrays.asList(data));
 
         // Now that we have some dummy forecast data, create an ArrayAdapter.
         // The ArrayAdapter will take data from a source (like our dummy forecast) and
         // use it to populate the ListView it's attached to.
         mForecastAdapter =//리스트뷰에 맞게 어댑터설정
-                new ArrayAdapter<String>(
-                        getActivity(), // The current context (this activity)
-                        R.layout.list_item_forecast, // The name of the layout ID.
-                        R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                        weekForecast);
+                new ForecastAdapter();
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);//fragment_main에 넣는거
 
         // Get a reference to the ListView, and attach this adapter to it.
-        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listView.setAdapter(mForecastAdapter);//리스트뷰에 어댑터넣기
+        mForecastRecyclerView = (RecyclerView) rootView.findViewById(R.id.listview_forecast);
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mForecastRecyclerView.setLayoutManager(mLayoutManager);
+        mForecastRecyclerView.setAdapter(mForecastAdapter);//리스트뷰에 어댑터넣기
 
         return rootView;
     }
@@ -305,9 +337,10 @@ public class ForecastFragment extends Fragment {
         @Override
         protected void onPostExecute(String[] result) {
             if (result != null) {
-                mForecastAdapter.clear();
+                mForecastAdapter.notifyItemRemoved(weekForecast.size());
                 for(String dayForecastStr : result) {
-                    mForecastAdapter.add(dayForecastStr);
+                    weekForecast = new ArrayList<String>(Arrays.asList(dayForecastStr));
+                    mForecastAdapter = new ForecastAdapter();
                 }
                 // New data is back from the server.  Hooray!
             }
