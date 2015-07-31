@@ -1,8 +1,11 @@
 package com.example.administrator.sunshine1;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,16 +38,20 @@ import java.util.List;
 /**
  * Created by Administrator on 2015-07-09.
  */
-
+//g
 /**
  * Encapsulates fetching the forecast and displaying it as a {@link ListView} layout.
  */
 public class ForecastFragment extends Fragment {
 
+    private static final boolean DEBUG = true;
+    private static final String TAG = "ForecastFragment";
+
     private RecyclerView.Adapter mForecastAdapter;
     List<String> weekForecast;
     private RecyclerView mForecastRecyclerView;
     private LinearLayoutManager mLayoutManager;
+    public ForecastHolder Holder;
     //배열형 어댑터선언
 /*<> 안에 들어가 있는 것은 자료형이나 데이터구조체, 클래스의 이름인데 이렇게 <>안에 자기가 원하는자료형을 넣어서 쓸 수 있게 작성된 클래스를 템플릿 클래스라고 한다.
 * <>안에가 int형이면 정수형 자료를 담을 수 있는 그릇이고 singeritem이면 singeritem의 자료를 담겠다고 선언한 것
@@ -66,17 +74,30 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {//refresh버튼이 선택되면
+    public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();//getitemid를 통해 눌려지는 그 id를 id값으로 받아오고
+        int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask weatherTask = new FetchWeatherTask();//아래의 클래스형의 변수 선언
-            weatherTask.execute("Incheon");//94043의 우편주소 weatherTask에서 파라미터로 받는거
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+    private void updateWeather() {
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        weatherTask.execute(location);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+        Util.getInstance().printLog(DEBUG, TAG, "ONSTART");
     }
 
     public class ForecastAdapter extends RecyclerView.Adapter<ForecastHolder>{
@@ -133,6 +154,20 @@ public class ForecastFragment extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mForecastRecyclerView.setLayoutManager(mLayoutManager);
         mForecastRecyclerView.setAdapter(mForecastAdapter);//리스트뷰에 어댑터넣기
+        mForecastRecyclerView.addOnItemTouchListener(new RecyclerItemClickListener(getActivity(), mForecastRecyclerView, new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Toast.makeText(getActivity().getApplicationContext(),weekForecast.get(position).toString(),Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, weekForecast.get(position).toString());
+                startActivity(intent);
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+                Toast.makeText(getActivity().getApplicationContext(), "Long Click~~!", Toast.LENGTH_SHORT).show();
+
+            }
+        }));
 
         return rootView;
     }
@@ -156,6 +191,8 @@ public class ForecastFragment extends Fragment {
          * Prepare the weather high/lows for presentation.
          */
         private String formatHighLows(double high, double low) {
+
+
             // For presentation, assume the user doesn't care about tenths of a degree.
             long roundedHigh = Math.round(high);//최고점
             long roundedLow = Math.round(low);//최저점
