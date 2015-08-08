@@ -46,7 +46,6 @@ public class ForecastFragment extends Fragment {
 
     private static final boolean DEBUG = true;
     private static final String TAG = "ForecastFragment";
-
     private RecyclerView.Adapter mForecastAdapter;
     List<String> weekForecast;
     private RecyclerView mForecastRecyclerView;
@@ -87,9 +86,11 @@ public class ForecastFragment extends Fragment {
     }
     private void updateWeather() {
         FetchWeatherTask weatherTask = new FetchWeatherTask();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(getActivity());
         String location = prefs.getString(getString(R.string.pref_location_key),
                 getString(R.string.pref_location_default));
+
+
         weatherTask.execute(location);
     }
 
@@ -158,7 +159,8 @@ public class ForecastFragment extends Fragment {
             @Override
             public void onItemClick(View view, int position) {
                 Toast.makeText(getActivity().getApplicationContext(),weekForecast.get(position).toString(),Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, weekForecast.get(position).toString());
+                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, weekForecast.get(position).toString());//Intent.EXTRA_TEXT - key name
+                // weekForecast.get(position).toString() - weekForecast가 리스트 형태로 데이터를 받을 때 해당하는 position의 위치에서 문자열을 받아오는 것, 다른 액티비티로 문자열을 전달해줄때는 같은 키값을 사용하더라도 전달하는 문자열만 바뀌면 된다
                 startActivity(intent);
             }
 
@@ -194,8 +196,14 @@ public class ForecastFragment extends Fragment {
 
 
             // For presentation, assume the user doesn't care about tenths of a degree.
-            long roundedHigh = Math.round(high);//최고점
-            long roundedLow = Math.round(low);//최저점
+            double roundedHigh = Math.round(high);//최고점
+            double roundedLow = Math.round(low);//최저점
+            SharedPreferences sharedprefs= PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String temperature = sharedprefs.getString(getString(R.string.Temperature_key),getString(R.string.Celsius_values));
+            if(temperature.equals(getString(R.string.Degrees_Fahrenheit_values))){
+                roundedHigh = (roundedHigh*1.8)+32;
+                roundedLow = (roundedLow*1.8)+32;
+            }
 
             String highLowStr = "최고"+ roundedHigh + "℃ / 최저" + roundedLow + "℃";//두개를 합쳐서 한번에 나타낸다. 스트링형
             return highLowStr;
